@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading;
@@ -14,12 +15,14 @@ namespace WebChatBotsWorkerService.Services
     public class BotsTasksSchedulerService : IHostedService, IDisposable
     {
         private readonly IServiceProvider services;
+        private readonly ILogger<BotsTasksSchedulerService> logger;
         private Timer timer;
         private readonly object syncRoot = new object();
 
-        public BotsTasksSchedulerService(IServiceProvider services)
+        public BotsTasksSchedulerService(IServiceProvider services, ILogger<BotsTasksSchedulerService> logger)
         {
             this.services = services;
+            this.logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -45,50 +48,60 @@ namespace WebChatBotsWorkerService.Services
 
         private void ProcessBotsTasks()
         {
-            using (var scope = services.CreateScope())
+            if (Monitor.TryEnter(syncRoot))
             {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var lastSync = context.Synchronizations.FirstOrDefault();
-                var lastSyncDate = lastSync?.SyncDate ?? DateTime.MinValue;
-
-                var newMessages = context.Messages.Include(m => m.Chat.Bots)
-                    .Where(m => m.SentDate > lastSyncDate && m.Chat.Bots.Count > 0);
-                foreach(var message in newMessages)
+                logger.LogInformation("Bots tasks queue filling started");
+                using (var scope = services.CreateScope())
                 {
-                    var isCommand = message.MessageText?.StartsWith('\\') ?? false; 
-                    var isUrl = (message.MessageText?.StartsWith("http") ?? false) 
-                                    || (message.MessageText?.StartsWith("file:/") ?? false);
-                    var isTxt = !isUrl && !isCommand;
-                    foreach(var bot in message.Chat.Bots)
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var lastSync = context.Synchronizations.FirstOrDefault();
+                    var lastSyncDate = lastSync?.SyncDate ?? DateTime.MinValue;
+
+                    var newMessages = context.Messages.Include(m => m.Chat.Bots)
+                        .Where(m => m.SentDate > lastSyncDate && m.Chat.Bots.Count > 0);
+                    foreach (var message in newMessages)
                     {
-                        switch(bot.Name)
+                        var isCommand = message.MessageText?.StartsWith('\\') ?? false;
+                        var isUrl = (message.MessageText?.StartsWith("http") ?? false)
+                                        || (message.MessageText?.StartsWith("file:/") ?? false);
+                        var isTxt = !isUrl && !isCommand;
+                        foreach (var bot in message.Chat.Bots)
                         {
-                            case BotsConstants.Bots.AngryBot:
-                                if (isTxt)
-                                {
-                                    AngryBotTasksSet(message.Chat.ChatID, message.MessageText);
-                                }
-                                break;
-                            case BotsConstants.Bots.CommandBot:
-                                if (isCommand)
-                                {
-                                    CommandBotTasksSet(message.Chat.ChatID, message.MessageText);
-                                }
-                                break;
-                            case BotsConstants.Bots.UrlBot:
-                                if (isUrl)
-                                {
-                                    UrlBotTasksSet(message.Chat.ChatID, message.MessageText.Split(" ").First());
-                                }
-                                break;
+                            switch (bot.Name)
+                            {
+                                case BotsConstants.Bots.AngryBot:
+                                    if (isTxt)
+                                    {
+                                        AngryBotTasksSet(message.Chat.ChatID, message.MessageText);
+                                    }
+                                    break;
+                                case BotsConstants.Bots.CommandBot:
+                                    if (isCommand)
+                                    {
+                                        CommandBotTasksSet(message.Chat.ChatID, message.MessageText);
+                                    }
+                                    break;
+                                case BotsConstants.Bots.UrlBot:
+                                    if (isUrl)
+                                    {
+                                        UrlBotTasksSet(message.Chat.ChatID, message.MessageText.Split(" ").First());
+                                    }
+                                    break;
+                            }
                         }
                     }
+                    if (lastSync != null)
+                    {
+                        lastSync.SyncDate = DateTime.Now;
+                        context.SaveChanges();
+                    }
                 }
-                if (lastSync != null)
-                {
-                    lastSync.SyncDate = DateTime.Now;
-                    context.SaveChanges();
-                }
+                logger.LogInformation("Bots tasks queue filling finished");
+                Monitor.Exit(syncRoot);
+            }
+            else
+            {
+                logger.LogInformation("Bots tasks queue filling skipped, because it in progress now");
             }
         }
 

@@ -8,6 +8,8 @@ namespace WebChatBotsWorkerService.BotsQueue.Contract
     {
         int Size { get; }
 
+        string GetName();
+
         void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem);
 
         Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken);

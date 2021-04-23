@@ -23,6 +23,7 @@ using WebChat.Inftastructure.Data;
 using WebChatBotsWorkerService.Services;
 using WebChatBotsWorkerService.Workers;
 using WebChatBotsWorkerService.BotsQueue.Implementation;
+using Microsoft.Extensions.Logging;
 
 namespace WebChat
 {
@@ -115,7 +116,7 @@ namespace WebChat
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -133,7 +134,7 @@ namespace WebChat
             {
                 endpoints.MapControllers();
             });
-
+            loggerFactory.AddLog4Net();
             SeedData.EnsurePopulated(app);
         }
     }
