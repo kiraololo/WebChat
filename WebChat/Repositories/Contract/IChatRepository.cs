@@ -23,7 +23,7 @@ namespace WebChat.Repositories.Contract
 
         IQueryable<Message> Messages { get; }
 
-        IEnumerable<Message> GetMessages(int chatId, int take= 100, int skip = 0);
+        IEnumerable<Message> GetMessages(int chatId, int userId, int take= 100, int skip = 0);
 
         void SendMessage(int chatId, string message);
 

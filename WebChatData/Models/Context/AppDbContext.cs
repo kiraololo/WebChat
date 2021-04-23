@@ -27,5 +27,6 @@ namespace WebChatDataData.Models.Context
         public DbSet<Bot> Bots { get; set; }
         public DbSet<Synchronization> Synchronizations { get; set; }
         public DbSet<AngryBotDictionary> AngryBotDictionary { get; set; }
+        public DbSet<LeavedChat> LeavedChats { get; set; }
     }
 }

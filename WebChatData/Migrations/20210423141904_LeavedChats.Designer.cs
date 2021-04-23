@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebChatDataData.Models.Context;
@@ -9,9 +10,10 @@ using WebChatDataData.Models.Context;
 namespace WebChatData.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210423141904_LeavedChats")]
+    partial class LeavedChats
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,15 +192,10 @@ namespace WebChatData.Migrations
                     b.Property<int>("ChatID")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ChatUserUserID")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("LeaveDate")
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("ChatUserUserID");
 
                     b.ToTable("LeavedChats");
                 });
@@ -317,13 +314,6 @@ namespace WebChatData.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebChatData.Models.LeavedChat", b =>
-                {
-                    b.HasOne("WebChatData.Models.ChatUser", null)
-                        .WithMany("LeavedChats")
-                        .HasForeignKey("ChatUserUserID");
-                });
-
             modelBuilder.Entity("WebChatData.Models.Message", b =>
                 {
                     b.HasOne("WebChatData.Models.Chat", "Chat")
@@ -346,11 +336,6 @@ namespace WebChatData.Migrations
                     b.Navigation("ChatUserEvents");
 
                     b.Navigation("History");
-                });
-
-            modelBuilder.Entity("WebChatData.Models.ChatUser", b =>
-                {
-                    b.Navigation("LeavedChats");
                 });
 #pragma warning restore 612, 618
         }

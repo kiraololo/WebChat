@@ -4,18 +4,18 @@ using System.Linq;
 using WebChat.Services.Contract;
 using WebChatData.Models;
 using WebChatDataData.Models.Context;
-//using WebChat.Models.Context;
-//using WebChat.Models;
 
 namespace WebChat.Services.Implementation
 {
     public class UserService: IUserService
     {
         private AppIdentityDBContext context;
+        private AppDbContext dataContext;
 
-        public UserService(AppIdentityDBContext ctx)
+        public UserService(AppIdentityDBContext context, AppDbContext dataContext)
         {
-            context = ctx;
+            this.context = context;
+            this.dataContext = dataContext;
         }
 
         public ApplicationUser Authenticate(string username, string password)
@@ -60,6 +60,12 @@ namespace WebChat.Services.Implementation
 
             context.Users.Add(user);
             context.SaveChanges();
+
+            dataContext.ChatUsers.Add(new ChatUser { 
+                LoginName = user.Username,
+                NikName = $"{user.LastName} {user.FirstName}"
+            });
+            dataContext.SaveChanges();
 
             return user;
         }

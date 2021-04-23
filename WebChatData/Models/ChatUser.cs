@@ -15,5 +15,8 @@ namespace WebChatData.Models
 
         [JsonIgnore]
         public ICollection<Chat> Chats { get; set; }
+
+        [JsonIgnore]
+        public ICollection<LeavedChat> LeavedChats { get; set; }
     }
 }

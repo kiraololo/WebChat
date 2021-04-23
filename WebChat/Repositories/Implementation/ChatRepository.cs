@@ -145,13 +145,34 @@ namespace WebChat.Repositories.Implementation
         public IQueryable<Message> Messages
             => context.Messages;
 
-        public IEnumerable<Message> GetMessages(int chatId, int take = 100, int skip = 0)
-            => context.Messages
-                .Include(m => m.Chat)
-                .Include(m => m.From)
-                .Where(m => m.Chat != null && m.Chat.ChatID == chatId)
-                .ToList()
-                .SkipLast(skip).TakeLast(take);
+        public IEnumerable<Message> GetMessages(int chatId, int userId, int take = 100, int skip = 0)
+        {
+            var res = new List<Message>();
+            var chat = context.Chats
+                .Include(c => c.History)
+                .Include(c => c.Members)
+                .FirstOrDefault(c=>c.ChatID == chatId);
+            if(chat != null)
+            {
+                if(chat.Members.Any(m => m.UserID == userId))
+                {
+                    res = chat.History.OrderBy(m => m.MessageID).ToList();
+                }
+                else
+                {
+                    var user = context.ChatUsers.Include(u => u.LeavedChats)
+                        .FirstOrDefault(u=>u.UserID == userId);
+                    var leavedDate = user.LeavedChats.FirstOrDefault(lc => lc.ChatID == chatId)?.LeaveDate;
+                    if(leavedDate.HasValue)
+                    {
+                        res = chat.History.Where(m 
+                            => m.SentDate < leavedDate.Value)
+                            .OrderBy(m=>m.MessageID).ToList();
+                    }
+                }
+            }
+            return res;
+        }
 
         public void SendMessage(int chatId, string message)
         {

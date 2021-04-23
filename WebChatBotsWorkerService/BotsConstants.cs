@@ -24,5 +24,12 @@
                 public const string HelpMessage = "Список команд: \\help- помощь; \\users_count- получить кол-во пользователей чата; \\get_owner- получить имя владельца чата; \\chat_age- получить возраст чата";
             }
         }
+
+        public static class ConfigSections
+        {
+            public const string BotsSettingsSection = "BotsSettings";
+            public const string WorkersCountSection = "WorkersCount";
+            public const string RunIntervalSection = "RunInterval";
+        }
     }
 }

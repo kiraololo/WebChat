@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WebChatBotsWorkerService.BotsQueue.Implementation;
+using WebChatBotsWorkerService.Infrastructure;
 using WebChatBotsWorkerService.Workers;
 using WebChatDataData.Models.Context;
 
@@ -27,10 +29,14 @@ namespace WebChatBotsWorkerService.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            var config = services.GetRequiredService<IConfiguration>();
+            var runInterval = config.GetSection(BotsConstants.ConfigSections.BotsSettingsSection)
+                .GetSection(BotsConstants.ConfigSections.RunIntervalSection).Value?.ToInt(1) ?? 1;
+
             timer = new Timer(
                 (e) => ProcessBotsTasks(),
                 null,
-                TimeSpan.Zero, TimeSpan.FromSeconds(1)
+                TimeSpan.Zero, TimeSpan.FromSeconds(runInterval)
             );
             return Task.CompletedTask;
         }        
@@ -58,7 +64,7 @@ namespace WebChatBotsWorkerService.Services
                     var lastSyncDate = lastSync?.SyncDate ?? DateTime.MinValue;
 
                     var newMessages = context.Messages.Include(m => m.Chat.Bots)
-                        .Where(m => m.SentDate > lastSyncDate && m.Chat.Bots.Count > 0);
+                        .Where(m => m.SentDate > lastSyncDate && m.Chat.Bots.Count > 0 && !m.FromBot);
                     foreach (var message in newMessages)
                     {
                         var isCommand = message.MessageText?.StartsWith('\\') ?? false;
