@@ -12,7 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using WebChat.ApiRequestsObjects;
 using WebChat.Inftastructure.Helpers;
-using WebChat.Repositories.Contract;
 using WebChat.Services.Contract;
 using WebChatData.Models;
 using WebChatData.Models.Autorization;
@@ -25,17 +24,18 @@ namespace WebChat.Controllers
     [Authorize]
     public class WebChatApiController : ControllerBase
     {
-        private IChatRepository repository;
+        private IChatService chatService;
         private IUserService userService;
         private IMapper mapper;
         private readonly SecretSettings secretSettings;
 
-        public WebChatApiController(IChatRepository repo, IUserService usersService, IMapper mpr, IOptions<SecretSettings> scrtSettings)
+        public WebChatApiController(IChatService chatService, IUserService userService,
+            IMapper mapper, IOptions<SecretSettings> secretSettings)
         {
-            repository = repo;
-            userService = usersService;
-            mapper = mpr;
-            secretSettings = scrtSettings.Value;
+            this.chatService = chatService;
+            this.userService = userService;
+            this.mapper = mapper;
+            this.secretSettings = secretSettings.Value;
         }
 
         [AllowAnonymous]
@@ -128,66 +128,75 @@ namespace WebChat.Controllers
 
         [HttpGet("Chats")]
        public IEnumerable<Chat> Get()
-            => repository.Chats;        
+            => chatService.Chats;        
 
         [HttpGet("Chats/GetById")]
         public Chat GetById(int id)
-            => repository.Chats.FirstOrDefault(c => c.ChatID == id);
+            => chatService.Chats.FirstOrDefault(c => c.ChatID == id);
 
         [HttpGet("Chats/GetByTitle")]
         public IEnumerable<Chat> GetByTitle(string title)
-            => repository.Chats.Where(c=>c.Title.Equals(title, System.StringComparison.OrdinalIgnoreCase));
+            => chatService.Chats.Where(c=>c.Title.Equals(title, System.StringComparison.OrdinalIgnoreCase));
 
         [HttpPost("Chats/Create")]
         public void CreateChat(ChatShort chat)
-            => repository.CreateChat(chat.Title, chat.OwnerId);
+            => chatService.CreateChat(chat.Title, chat.OwnerId);
 
         [HttpPut("Chats/Rename")]
         public void RenameChat(ChatNewTitle chat)
-            => repository.RenameChat(chat.ChatId, chat.ChatTitle);
+            => chatService.RenameChat(chat.ChatId, chat.ChatTitle);
 
         [HttpPost("Chats/AddMember")]
         public void AddMember(ChatMember member)
-            => repository.AddMember(member.ChatId, member.MemberId);
+            => chatService.AddMember(member.ChatId, member.MemberId);
 
         [HttpDelete("Chats/DeleteMember")]
         public void DeleteMember(int chatId, int memberId)
-            => repository.DeleteMember(chatId, memberId);
+            => chatService.DeleteMember(chatId, memberId);
 
         [HttpPut("Chats/PutOwner")]
         public void PutOwner(ChatMember owner)
-            => repository.PutOwner(owner.ChatId, owner.MemberId);
+            => chatService.PutOwner(owner.ChatId, owner.MemberId);
 
         [HttpDelete("Chats/Delete")]
         public void DeleteChat(int id)
-            => repository.DeleteChat(id);
+            => chatService.DeleteChat(id);
 
         [HttpGet("Messages")]
         public IEnumerable<Message> GetMessages(int chatId, int userId, int take=100, int skip = 0)
-            => repository.GetMessages(chatId, userId, take, skip);
+            => chatService.GetMessages(chatId, userId, take, skip);
 
         [HttpPost("Messages/Send")]
         public void SendMessage(SendingMessage message)
-            => repository.SendMessage(message.ChatId, message.Message);
+            => chatService.SendMessage(message.ChatId, message.Message);
 
         [HttpPut("Messages/Read")]
         public void ReadMessage([FromBody]int messageId)
-            => repository.ReadMessage(messageId);
+            => chatService.ReadMessage(messageId);
 
         [HttpPut("Messages/Change")]
         public void ChangeMessage(ChangedMessage message)
-            => repository.ChangeMessage(message.MessageId, message.NewMessage);
+            => chatService.ChangeMessage(message.MessageId, message.NewMessage);
 
         [HttpDelete("Messages/Delete")]
-        public void DeleteMessage(int id)
-            => repository.DeleteMessage(id);
+        public async Task<IActionResult> DeleteMessage(int messageId, int userId)
+        {
+            await chatService.DeleteMessage(messageId, userId);
+            return Ok();
+        }   
 
         [HttpPost("Bots/AddToChat")]
-        public void AddBotToChat(ChatBot bot)
-            => repository.AddBotToChat(bot.Name, bot.ChatId);
+        public async Task<IActionResult> AddBotToChat(ChatBot bot)
+        {
+            await chatService.AddBotToChat(bot.Name, bot.ChatId);
+            return Ok();
+        }
 
         [HttpPost("Bots/RemoveFromChat")]
-        public async Task RemoveBotFromChat(ChatBot bot)
-            => await repository.RemoveBotFromChat(bot.Name, bot.ChatId);
+        public async Task<IActionResult> RemoveBotFromChat(ChatBot bot)
+        {
+            await chatService.RemoveBotFromChat(bot.Name, bot.ChatId);
+            return Ok();
+        }
     }
 }

@@ -11,12 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using WebChat.Inftastructure;
 using WebChat.Inftastructure.Helpers;
-//using WebChat.Models.Context;
-using WebChat.Repositories.Contract;
-using WebChat.Repositories.Implementation;
 using WebChat.Services.Contract;
 using WebChat.Services.Implementation;
-using AutoMapper;
 using WebChatBotsWorkerService;
 using WebChatDataData.Models.Context;
 using WebChat.Inftastructure.Data;
@@ -58,7 +54,7 @@ namespace WebChat
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<IChatRepository, ChatRepository>();
+            services.AddScoped<IChatService, ChatService>();
                         
             // configure strongly typed settings objects
             var secretSettingsSection = Configuration.GetSection(

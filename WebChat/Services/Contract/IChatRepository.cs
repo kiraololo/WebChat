@@ -3,9 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebChatData.Models;
 
-namespace WebChat.Repositories.Contract
+namespace WebChat.Services.Contract
 {
-    public interface IChatRepository
+    public interface IChatService
     {
         IQueryable<Chat> Chats { get; }
 
@@ -31,7 +31,7 @@ namespace WebChat.Repositories.Contract
 
         void ChangeMessage(int id, string newMessage);
 
-        void DeleteMessage(int id);
+        Task DeleteMessage(int messageId, int userId);
 
         Task AddBotToChat(string name, int chatId);
 

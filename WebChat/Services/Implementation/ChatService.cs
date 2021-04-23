@@ -4,18 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebChat.Inftastructure;
-//using WebChat.Models.Context;
-using WebChat.Repositories.Contract;
+using WebChat.Services.Contract;
 using WebChatData.Models;
 using WebChatDataData.Models.Context;
 
-namespace WebChat.Repositories.Implementation
+namespace WebChat.Services.Implementation
 {
-    public class ChatRepository : IChatRepository
+    public class ChatService : IChatService
     {
         private AppDbContext context;
 
-        public ChatRepository(AppDbContext ctx)
+        public ChatService(AppDbContext ctx)
         {
             context = ctx;
         }
@@ -224,22 +223,23 @@ namespace WebChat.Repositories.Implementation
             }
         }
 
-        public void DeleteMessage(int id)
+        public async Task DeleteMessage(int messageId, int userId)
         {
-            var CURRENT_USER_POTOM_PEREDELAT = context.ChatUsers.FirstOrDefault();
-
-            var message = context.Messages.Include(m => m.Chat)
-                .FirstOrDefault(m => m.MessageID == id);
-            var canDelete = message.Chat?.Owner?.UserID == CURRENT_USER_POTOM_PEREDELAT.UserID;
+            var user = await context.ChatUsers.FirstOrDefaultAsync(u => u.UserID == userId);
+            if (user == null)
+                return;
+            var message = await context.Messages.Include(m => m.Chat)
+                .FirstOrDefaultAsync(m => m.MessageID == messageId);
+            var canDelete = message.Chat?.Owner?.UserID == user.UserID;
             if (!canDelete)
             {
-                canDelete = CURRENT_USER_POTOM_PEREDELAT.UserID == message.From.UserID
+                canDelete = user.UserID == message.From.UserID
                                 && message.SentDate.AddDays(1) > DateTime.Now;
             }
             if (canDelete)
             {
                 context.Messages.Remove(message);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
@@ -271,19 +271,6 @@ namespace WebChat.Repositories.Implementation
                     await context.SaveChangesAsync();
                 }
             }
-
-
-                //var bot = context.Bots.FirstOrDefault(b => b.Name == name);
-                //if (bot != null)
-                //{
-                //    var chat = context.Chats.Include(c => c.Bots)
-                //                    .FirstOrDefault(c => c.ChatID == chatId);
-                //    if (chat != null)
-                //    {
-                //        chat.Bots.Remove(bot);
-                //        context.SaveChanges();
-                //    }
-                //}
         }
     }
 }
