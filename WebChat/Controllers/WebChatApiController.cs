@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -104,13 +105,13 @@ namespace WebChat.Controllers
         }
 
         [HttpPut("Users/Update")]
-        public IActionResult Update(int id, [FromBody] UpdateModel model)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateModel model)
         {
             var user = mapper.Map<ApplicationUser>(model);
             user.Id = id;
             try
             {
-                userService.Update(user, model.Password);
+                await userService.Update(user, model.Password);
                 return Ok();
             }
             catch (Exception ex)
@@ -120,9 +121,9 @@ namespace WebChat.Controllers
         }
 
         [HttpDelete("Users/Delete")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            userService.Delete(id);
+            await userService.Delete(id);
             return Ok();
         }
 
@@ -131,52 +132,80 @@ namespace WebChat.Controllers
             => chatService.Chats;        
 
         [HttpGet("Chats/GetById")]
-        public Chat GetById(int id)
-            => chatService.Chats.FirstOrDefault(c => c.ChatID == id);
+        public async Task<Chat> GetById(int id)
+            => await chatService.Chats.FirstOrDefaultAsync(c => c.ChatID == id);
 
         [HttpGet("Chats/GetByTitle")]
         public IEnumerable<Chat> GetByTitle(string title)
             => chatService.Chats.Where(c=>c.Title.Equals(title, System.StringComparison.OrdinalIgnoreCase));
 
         [HttpPost("Chats/Create")]
-        public void CreateChat(ChatShort chat)
-            => chatService.CreateChat(chat.Title, chat.OwnerId);
+        public async Task<IActionResult> CreateChat(ChatShort chat)
+        {
+            await chatService.CreateChat(chat.Title, chat.OwnerId);
+            return Ok();
+        }
 
         [HttpPut("Chats/Rename")]
-        public void RenameChat(ChatNewTitle chat)
-            => chatService.RenameChat(chat.ChatId, chat.ChatTitle);
+        public async Task<IActionResult> RenameChat(ChatNewTitle chat)
+        {
+            await chatService.RenameChat(chat.ChatId, chat.ChatTitle);
+            return Ok();
+        }
 
         [HttpPost("Chats/AddMember")]
-        public void AddMember(ChatMember member)
-            => chatService.AddMember(member.ChatId, member.MemberId);
+        public async Task<IActionResult> AddMember(ChatMember member)
+        {
+            await chatService.AddMember(member.ChatId, member.MemberId);
+            return Ok();
+        }
 
         [HttpDelete("Chats/DeleteMember")]
-        public void DeleteMember(int chatId, int memberId)
-            => chatService.DeleteMember(chatId, memberId);
+        public async Task<IActionResult> DeleteMember(int chatId, int currentUserId, int deleteMemberId)
+        {
+            await chatService.DeleteMember(chatId, currentUserId, deleteMemberId);
+            return Ok();
+        }
 
         [HttpPut("Chats/PutOwner")]
-        public void PutOwner(ChatMember owner)
-            => chatService.PutOwner(owner.ChatId, owner.MemberId);
+        public async Task<IActionResult> PutOwner(ChatMember owner)
+        {
+            await chatService.PutOwner(owner.ChatId, owner.MemberId);
+            return Ok();
+        }
 
         [HttpDelete("Chats/Delete")]
-        public void DeleteChat(int id)
-            => chatService.DeleteChat(id);
+        public async Task<IActionResult> DeleteChat(int id)
+        {
+            await chatService.DeleteChat(id);
+            return Ok();
+        }            
 
         [HttpGet("Messages")]
-        public IEnumerable<Message> GetMessages(int chatId, int userId, int take=100, int skip = 0)
-            => chatService.GetMessages(chatId, userId, take, skip);
+        public async Task<IEnumerable<Message>> GetMessages(int chatId, int userId, int take = 100, int skip = 0)
+            => await chatService.GetMessages(chatId, userId, take, skip);
+        
 
         [HttpPost("Messages/Send")]
-        public void SendMessage(SendingMessage message)
-            => chatService.SendMessage(message.ChatId, message.Message);
+        public async Task<IActionResult> SendMessage(SendingMessage message)
+        {
+            await chatService.SendMessage(message.ChatId, message.UserId, message.Message);
+            return Ok();
+        }
 
         [HttpPut("Messages/Read")]
-        public void ReadMessage([FromBody]int messageId)
-            => chatService.ReadMessage(messageId);
+        public async Task<IActionResult> ReadMessage([FromBody]int messageId)
+        {
+            await chatService.ReadMessage(messageId);
+            return Ok();
+        }            
 
         [HttpPut("Messages/Change")]
-        public void ChangeMessage(ChangedMessage message)
-            => chatService.ChangeMessage(message.MessageId, message.NewMessage);
+        public async Task<IActionResult> ChangeMessage(ChangedMessage message)
+        {
+            await chatService.ChangeMessage(message.MessageId, message.NewMessage, message.UserId);
+            return Ok();
+        }
 
         [HttpDelete("Messages/Delete")]
         public async Task<IActionResult> DeleteMessage(int messageId, int userId)

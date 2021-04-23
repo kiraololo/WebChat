@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using WebChatData.Models;
 //using WebChat.Models;
 
@@ -10,7 +11,7 @@ namespace WebChat.Services.Contract
         IEnumerable<ApplicationUser> GetAll();
         ApplicationUser GetById(int id);
         ApplicationUser Create(ApplicationUser user, string password);
-        void Update(ApplicationUser user, string password = null);
-        void Delete(int id);
+        Task Update(ApplicationUser user, string password = null);
+        Task Delete(int id);
     }
 }

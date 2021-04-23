@@ -45,11 +45,21 @@
 		{
 			"name": "CreateChat",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IjEiLCJuYmYiOjE2MTg4NDYxOTYsImV4cCI6MTYxOTQ1MDk5NSwiaWF0IjoxNjE4ODQ2MTk2fQ.7RJ8Tqpl5OVO1fgHOxGagFqW-DlYRsLRT-P6IJcAAaM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"Title\": \"Test_5\",\r\n    \"OwnerId\": 1\r\n}",
+					"raw": "{\r\n    \"Title\": \"Новый чат\",\r\n    \"OwnerId\": 1\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -129,7 +139,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"ChatId\": 1,\r\n    \"MemberId\": 1\r\n}",
+					"raw": "{\r\n    \"ChatId\": 3,\r\n    \"MemberId\": 1\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -155,10 +165,20 @@
 		{
 			"name": "DeleteChat",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IjEiLCJuYmYiOjE2MTg4NDYxOTYsImV4cCI6MTYxOTQ1MDk5NSwiaWF0IjoxNjE4ODQ2MTk2fQ.7RJ8Tqpl5OVO1fgHOxGagFqW-DlYRsLRT-P6IJcAAaM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "https://localhost:44301/WebChatApi/Chats/Delete?id=4",
+					"raw": "https://localhost:44301/WebChatApi/Chats/Delete?id=2",
 					"protocol": "https",
 					"host": [
 						"localhost"
@@ -172,7 +192,7 @@
 					"query": [
 						{
 							"key": "id",
-							"value": "4"
+							"value": "2"
 						}
 					]
 				}
@@ -244,7 +264,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"ChatId\": 1,\r\n    \"Message\": \"Привет\"\r\n}",
+					"raw": "{\r\n    \"ChatId\": 1,\r\n    \"UserId\": 1,\r\n    \"Message\": \"Здрасте\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -270,11 +290,21 @@
 		{
 			"name": "ReadMessage",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IjEiLCJuYmYiOjE2MTg4NDYxOTYsImV4cCI6MTYxOTQ1MDk5NSwiaWF0IjoxNjE4ODQ2MTk2fQ.7RJ8Tqpl5OVO1fgHOxGagFqW-DlYRsLRT-P6IJcAAaM",
+							"type": "string"
+						}
+					]
+				},
 				"method": "PUT",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "1",
+					"raw": "2",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -313,7 +343,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "https://localhost:44301/WebChatApi/Chats/DeleteMember?chatId=1&memberId=1",
+					"raw": "https://localhost:44301/WebChatApi/Chats/DeleteMember?chatId=1&currentUserId=1&deleteMemberId=2",
 					"protocol": "https",
 					"host": [
 						"localhost"
@@ -330,8 +360,12 @@
 							"value": "1"
 						},
 						{
-							"key": "memberId",
+							"key": "currentUserId",
 							"value": "1"
+						},
+						{
+							"key": "deleteMemberId",
+							"value": "2"
 						}
 					]
 				}
@@ -395,7 +429,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"MessageId\": 3,\r\n    \"NewMessage\": \"Измененное сообщение 2\"\r\n}",
+					"raw": "{\r\n    \"MessageId\": 2,\r\n    \"NewMessage\": \"Измененное сообщение\",\r\n    \"UserId\": 1\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -434,7 +468,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "https://localhost:44301/WebChatApi/Messages/Delete?id=2",
+					"raw": "https://localhost:44301/WebChatApi/Messages/Delete?messageId=1&userId=1",
 					"protocol": "https",
 					"host": [
 						"localhost"
@@ -447,8 +481,12 @@
 					],
 					"query": [
 						{
-							"key": "id",
-							"value": "2"
+							"key": "messageId",
+							"value": "1"
+						},
+						{
+							"key": "userId",
+							"value": "1"
 						}
 					]
 				}
@@ -542,7 +580,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"FirstName\": \"Иванов\",\r\n    \"LastName\": \"Иван\",\r\n    \"Username\": \"Ivanov666\",\r\n    \"Password\": \"1q2w3e4r\"\r\n}",
+					"raw": "{\r\n    \"FirstName\": \"Петров\",\r\n    \"LastName\": \"Иван\",\r\n    \"Username\": \"ppp_iii\",\r\n    \"Password\": \"1q2w3e4r\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

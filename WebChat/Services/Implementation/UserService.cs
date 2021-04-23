@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using WebChat.Services.Contract;
 using WebChatData.Models;
 using WebChatDataData.Models.Context;
@@ -70,13 +71,11 @@ namespace WebChat.Services.Implementation
             return user;
         }
 
-        public void Update(ApplicationUser userParam, string password = null)
+        public async Task Update(ApplicationUser userParam, string password = null)
         {
-            var user = context.Users.Find(userParam.Id);
-
+            var user = await context.Users.FindAsync(userParam.Id);
             if (user == null)
                 throw new Exception("User not found");            
-
             if (!string.IsNullOrWhiteSpace(userParam.Username) && userParam.Username != user.Username)
             {
                 if (context.Users.Any(x => x.Username == userParam.Username))
@@ -100,16 +99,16 @@ namespace WebChat.Services.Implementation
             }
 
             context.Users.Update(user);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
-            var user = context.Users.Find(id);
+            var user = await context.Users.FindAsync(id);
             if (user != null)
             {
                 context.Users.Remove(user);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 

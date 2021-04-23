@@ -26,15 +26,19 @@ namespace WebChat.Services.Implementation
             .Include(c => c.Owner)
             .Include(c => c.ChatEvents).Include(c => c.ChatUserEvents);
 
-        public void AddMember(int chatId, int memberId)
+        public IQueryable<Message> Messages
+            => context.Messages;
+
+        public async Task AddMember(int chatId, int memberId)
         {
-            var member = context.ChatUsers.FirstOrDefault(u => u.UserID == memberId);
+            var member = await context.ChatUsers
+                .FirstOrDefaultAsync(u => u.UserID == memberId);
             if (member == null)
                 return;
-            var chat = context.Chats
+            var chat = await context.Chats
                 .Include(c => c.Members)
                 .Include(c => c.ChatUserEvents)
-                .FirstOrDefault(c => c.ChatID == chatId);
+                .FirstOrDefaultAsync(c => c.ChatID == chatId);
             if (chat == null)
                 return;
             if (!chat.Members.Any(m => m.UserID == memberId))
@@ -45,22 +49,20 @@ namespace WebChat.Services.Implementation
                     Description = $"{DateTime.Now}: Пользователь {((member.NikName?.IsEmpty() ?? true) ? member.LoginName : member.NikName)} присоединился к чату",
                     User = member
                 });
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        public void DeleteMember(int chatId, int memberId)
+        public async Task DeleteMember(int chatId, int currentUserId, int deleteMemberId)
         {
-            //TODO: проверка на самого себя
-            var memberIsCurrentUser = true;
-
-            var chat = context.Chats
+            var memberIsCurrentUser = currentUserId == deleteMemberId;
+            var chat = await context.Chats
                 .Include(c => c.Members)
                 .Include(c => c.ChatUserEvents)
-                .FirstOrDefault(c => c.ChatID == chatId);
+                .FirstOrDefaultAsync(c => c.ChatID == chatId);
             if (chat == null)
                 return;
-            var member = chat.Members.FirstOrDefault(u => u.UserID == memberId);
+            var member = chat.Members.FirstOrDefault(u => u.UserID == deleteMemberId);
             if (member == null)
                 return;
             chat.Members.Remove(member);
@@ -82,29 +84,28 @@ namespace WebChat.Services.Implementation
                     User = member
                 });
             }
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
 
-        public void CreateChat(string title, int? ownerId = null)
+        public async Task CreateChat(string title, int? ownerId = null)
         {
             var owner = ownerId.HasValue
-                ? context.ChatUsers.FirstOrDefault(u => u.UserID == ownerId.Value)
+                ? await context.ChatUsers.FirstOrDefaultAsync(u => u.UserID == ownerId.Value)
                 : null;
             context.Chats.Add(new Chat {
                 Title = title,
                 Owner = owner
             });
-            context.SaveChanges();
-            //context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
-        public void RenameChat(int chatId, string chatTitle)
+        public async Task RenameChat(int chatId, string chatTitle)
         {
             if (chatTitle.IsEmpty())
                 return;
-            var chat = context.Chats
+            var chat = await context.Chats
                 .Include(c => c.ChatEvents)
-                .FirstOrDefault(c => c.ChatID == chatId);
+                .FirstOrDefaultAsync(c => c.ChatID == chatId);
             if (chat != null && chat.Title != chatTitle)
             {
                 var oldTitle = chat.Title;
@@ -113,44 +114,41 @@ namespace WebChat.Services.Implementation
                     EventKey = Constants.ChatEvent.ChatWasRenamed,
                     Description = $"{DateTime.Now}: Чат изменил название с \"{ oldTitle }\" на \"{ chatTitle }\""
                 });
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        public void DeleteChat(int id)
+        public async Task DeleteChat(int id)
         {
-            var chatToRemove = context.Chats.FirstOrDefault(c => c.ChatID == id);
+            var chatToRemove = await context.Chats.FirstOrDefaultAsync(c => c.ChatID == id);
             if (chatToRemove != null)
             {
                 context.Chats.Remove(chatToRemove);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        public void PutOwner(int chatId, int memberId)
+        public async Task PutOwner(int chatId, int memberId)
         {
-            var owner = context.ChatUsers.FirstOrDefault(u => u.UserID == memberId);
+            var owner = await context.ChatUsers
+                .FirstOrDefaultAsync(u => u.UserID == memberId);
             if (owner == null)
                 return;
-            var chat = context.Chats
-                .FirstOrDefault(c => c.ChatID == chatId);
+            var chat = await context.Chats
+                .FirstOrDefaultAsync(c => c.ChatID == chatId);
             if (chat == null)
                 return;
             chat.Owner = owner;
-            context.SaveChanges();
-            //context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
-        public IQueryable<Message> Messages
-            => context.Messages;
-
-        public IEnumerable<Message> GetMessages(int chatId, int userId, int take = 100, int skip = 0)
+        public async Task<IEnumerable<Message>> GetMessages(int chatId, int userId, int take = 100, int skip = 0)
         {
             var res = new List<Message>();
-            var chat = context.Chats
+            var chat = await context.Chats
                 .Include(c => c.History)
                 .Include(c => c.Members)
-                .FirstOrDefault(c=>c.ChatID == chatId);
+                .FirstOrDefaultAsync(c=>c.ChatID == chatId);
             if(chat != null)
             {
                 if(chat.Members.Any(m => m.UserID == userId))
@@ -159,8 +157,8 @@ namespace WebChat.Services.Implementation
                 }
                 else
                 {
-                    var user = context.ChatUsers.Include(u => u.LeavedChats)
-                        .FirstOrDefault(u=>u.UserID == userId);
+                    var user = await context.ChatUsers.Include(u => u.LeavedChats)
+                        .FirstOrDefaultAsync(u=>u.UserID == userId);
                     var leavedDate = user.LeavedChats.FirstOrDefault(lc => lc.ChatID == chatId)?.LeaveDate;
                     if(leavedDate.HasValue)
                     {
@@ -173,53 +171,56 @@ namespace WebChat.Services.Implementation
             return res;
         }
 
-        public void SendMessage(int chatId, string message)
+        public async Task SendMessage(int chatId, int userId, string message)
         {
-            var USER_TEST_POTOM_UDALIT = context.ChatUsers.FirstOrDefault();
-
-            var chat = context.Chats.Include(c=>c.History)
-                .FirstOrDefault(c => c.ChatID == chatId);
+            var user = await context.ChatUsers.FirstOrDefaultAsync(u=>u.UserID == userId);
+            if (user == null)
+                return;
+            var chat = await context.Chats.Include(c=>c.History)
+                .FirstOrDefaultAsync(c => c.ChatID == chatId);
             if(chat != null)
             {
                 chat.History.Add(new Message
                 {
-                    From = USER_TEST_POTOM_UDALIT,
+                    From = user,
                     MessageText = message,
                     SentDate = DateTime.Now
                 });
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        public void ReadMessage(int messageId)
+        public async Task ReadMessage(int messageId)
         {
-            var message = context.Messages.FirstOrDefault(m=> m.MessageID == messageId);
+            var message = await context.Messages
+                .FirstOrDefaultAsync(m=> m.MessageID == messageId);
             if(message != null && !message.IsReaded)
             {
                 message.IsReaded = true;
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        public void ChangeMessage(int id, string newMessage)
+        public async Task ChangeMessage(int messageId, string newMessage, int userId)
         {
-            var CURRENT_USER_POTOM_PEREDELAT = context.ChatUsers.FirstOrDefault();
-            
-            var message = context.Messages.Include(m=>m.Chat)
-                .FirstOrDefault(m => m.MessageID == id);
+            var user = await context.ChatUsers.FirstOrDefaultAsync(u=>u.UserID == userId);
+            if (user == null)
+                return;
+            var message = await context.Messages.Include(m=>m.Chat)
+                .FirstOrDefaultAsync(m => m.MessageID == messageId);
             if (message.MessageText == newMessage)
                 return;
-            var canChange = message.Chat?.Owner?.UserID == CURRENT_USER_POTOM_PEREDELAT.UserID;
+            var canChange = message.Chat?.Owner?.UserID == user.UserID;
             if (!canChange)
             {
-                canChange = CURRENT_USER_POTOM_PEREDELAT.UserID == message.From.UserID
+                canChange = user.UserID == message.From.UserID
                                 && message.SentDate.AddDays(1) > DateTime.Now;
             }
             if(canChange)
             {
                 message.MessageText = newMessage;
                 message.IsEdited = true;
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
