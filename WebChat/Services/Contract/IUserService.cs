@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using WebChat.Models;
+using WebChatData.Models;
+//using WebChat.Models;
 
 namespace WebChat.Services.Contract
 {

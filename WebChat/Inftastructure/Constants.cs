@@ -28,9 +28,9 @@
             public const string ChatWasRenamed = "ChatWasRenamed";
         }
 
-        public static class Bots
-        {
-            public const string AngryBot = "AngryBot";
-        }
+        //public static class Bots
+        //{
+        //    public const string AngryBot = "AngryBot";
+        //}
     }
 }

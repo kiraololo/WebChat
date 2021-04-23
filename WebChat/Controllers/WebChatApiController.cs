@@ -9,12 +9,17 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using WebChat.ApiRequestsObjects;
 using WebChat.Inftastructure.Helpers;
-using WebChat.Models;
-using WebChat.Models.ApiObjects;
-using WebChat.Models.Autorization;
-using WebChat.Models.Repositories.Contract;
+using WebChat.Repositories.Contract;
+//using WebChat.Models;
+//using WebChat.Models.ApiObjects;
+//using WebChat.Models.Autorization;
+//using WebChat.Models.Repositories.Contract;
 using WebChat.Services.Contract;
+using WebChatData.Models;
+using WebChatData.Models.Autorization;
+using WebChatDataData.Models.Autorization;
 
 namespace WebChat.Controllers
 {

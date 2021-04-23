@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using WebChat.Models.Context;
+using WebChatDataData.Models.Context;
+//using WebChat.Models.Context;
 
 namespace WebChat.Migrations.AppIdentityDB
 {

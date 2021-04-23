@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
-using WebChat.Models;
-using WebChat.Models.Autorization;
+using WebChatData.Models;
+using WebChatData.Models.Autorization;
+//using WebChat.Models;
+//using WebChat.Models.Autorization;
 
 namespace WebChat.Inftastructure.Helpers
 {

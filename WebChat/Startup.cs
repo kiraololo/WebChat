@@ -11,12 +11,18 @@ using System.Text;
 using System.Threading.Tasks;
 using WebChat.Inftastructure;
 using WebChat.Inftastructure.Helpers;
-using WebChat.Models.Context;
-using WebChat.Models.Repositories.Contract;
-using WebChat.Models.Repositories.Implementation;
+//using WebChat.Models.Context;
+using WebChat.Repositories.Contract;
+using WebChat.Repositories.Implementation;
 using WebChat.Services.Contract;
 using WebChat.Services.Implementation;
 using AutoMapper;
+using WebChatBotsWorkerService;
+using WebChatDataData.Models.Context;
+using WebChat.Inftastructure.Data;
+using WebChatBotsWorkerService.Services;
+using WebChatBotsWorkerService.Workers;
+using WebChatBotsWorkerService.BotsQueue.Implementation;
 
 namespace WebChat
 {
@@ -52,7 +58,7 @@ namespace WebChat
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<IChatRepository, ChatRepository>();
-
+                        
             // configure strongly typed settings objects
             var secretSettingsSection = Configuration.GetSection(
                 Constants.Settings.ConfigSections.SecretSettingsSection);
@@ -96,6 +102,16 @@ namespace WebChat
 
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+            
+            services.AddHostedService<BotsTasksSchedulerService>();
+            services.AddHostedService<BotsWorkerService>();            
+            services.AddSingleton<AngryBotWorker>();
+            services.AddSingleton<CommandBotWorker>();
+            services.AddSingleton<UrlBotWorker>();
+            services.AddSingleton<AngryBotTasksQueue>();
+            services.AddSingleton<CommandBotTasksQueue>();
+            services.AddSingleton<UrlBotTasksQueue>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

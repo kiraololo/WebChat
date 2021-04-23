@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using WebChat.Services.Contract;
-using WebChat.Models.Context;
-using WebChat.Models;
+using WebChatData.Models;
+using WebChatDataData.Models.Context;
+//using WebChat.Models.Context;
+//using WebChat.Models;
 
 namespace WebChat.Services.Implementation
 {
