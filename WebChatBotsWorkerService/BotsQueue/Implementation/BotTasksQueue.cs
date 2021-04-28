@@ -6,7 +6,7 @@ using WebChatBotsWorkerService.BotsQueue.Contract;
 
 namespace WebChatBotsWorkerService.BotsQueue.Implementation
 {
-    public class BotTasksQueueBase : IBotsTasksQueue
+    public class BotTasksQueue : IBotsTasksQueue
     {
         private ConcurrentQueue<Func<CancellationToken, Task>> workItems = new ConcurrentQueue<Func<CancellationToken, Task>>();
         private SemaphoreSlim signal = new SemaphoreSlim(0);

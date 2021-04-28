@@ -1,15 +1,13 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WebChatBotsWorkerService.BotsQueue.Contract;
-using WebChatBotsWorkerService.BotsQueue.Implementation;
-using WebChatBotsWorkerService.Infrastructure;
+using WebChatBotsWorkerService.Helpers;
 
 namespace WebChatBotsWorkerService
 {
@@ -25,44 +23,21 @@ namespace WebChatBotsWorkerService
 
         protected override async Task ExecuteAsync(CancellationToken token)
         {
-            var workers = new List<Task>();
-
-            var config = services.GetRequiredService<IConfiguration>();
-            var botsConfigSection = config.GetSection(BotsConstants.ConfigSections.BotsSettingsSection);
-
-            var angryBotWorkersCount = botsConfigSection.GetSection(BotsConstants.Bots.AngryBot)
-                .GetSection(BotsConstants.ConfigSections.WorkersCountSection).Value?.ToInt(2) ?? 2;
-            var commandBotWorkersCount = botsConfigSection.GetSection(BotsConstants.Bots.CommandBot)
-                .GetSection(BotsConstants.ConfigSections.WorkersCountSection).Value?.ToInt(2) ?? 2;
-            var urlBotWorkersCount = botsConfigSection.GetSection(BotsConstants.Bots.UrlBot)
-                .GetSection(BotsConstants.ConfigSections.WorkersCountSection).Value?.ToInt(2) ?? 2;
-
-            var angryBotTasksQueue = services.GetRequiredService<AngryBotTasksQueue>();
-            var angryBotWorkers = Enumerable.Range(0, angryBotWorkersCount).Select(idx 
-                                        => RunInstance(idx, nameof(AngryBotTasksQueue), angryBotTasksQueue, token));
-            workers.AddRange(angryBotWorkers);
-
-            var commandBotTasksQueue = services.GetRequiredService<CommandBotTasksQueue>();
-            var commandBotWorkers = Enumerable.Range(0, commandBotWorkersCount).Select(idx 
-                                        => RunInstance(idx, nameof(CommandBotTasksQueue), commandBotTasksQueue, token));
-            workers.AddRange(commandBotWorkers);
-
-            var urlBotTasksQueue = services.GetRequiredService<UrlBotTasksQueue>();
-            var urlBotWorkers = Enumerable.Range(0, urlBotWorkersCount).Select(idx 
-                                        => RunInstance(idx, nameof(UrlBotTasksQueue), urlBotTasksQueue, token));
-            workers.AddRange(urlBotWorkers);
-
+            var botsConfiguration = services.GetRequiredService<IOptions<BotsSettings>>()?.Value;
+            var botsTasksQueue = services.GetRequiredService<IBotsTasksQueue>();
+            var workers = Enumerable.Range(0, botsConfiguration?.WorkersCount ?? 1).Select(idx
+                                        => RunInstance(idx, botsTasksQueue, token));
             await Task.WhenAll(workers);
         }
 
-        private async Task RunInstance(int idx, string queueName, IBotsTasksQueue tasksQueue, CancellationToken token)
+        private async Task RunInstance(int idx, IBotsTasksQueue tasksQueue, CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
                 var workItem = await tasksQueue.DequeueAsync(token);
                 try
                 {
-                    logger.LogInformation($"Worker {idx}: Processing task. Left tasks in queue {queueName}: {tasksQueue.Size}.");
+                    logger.LogInformation($"Worker {idx}: Processing task. Left tasks in queue: {tasksQueue.Size}.");
                     await workItem(token);
                 }
                 catch (Exception ex)

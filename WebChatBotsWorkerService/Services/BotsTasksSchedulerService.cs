@@ -7,9 +7,10 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using WebChatBotsWorkerService.BotsQueue.Implementation;
+using WebChatBotsWorkerService.BotsQueue.Contract;
 using WebChatBotsWorkerService.Infrastructure;
 using WebChatBotsWorkerService.Workers;
+using WebChatData.Models;
 using WebChatDataData.Models.Context;
 
 namespace WebChatBotsWorkerService.Services
@@ -67,34 +68,7 @@ namespace WebChatBotsWorkerService.Services
                         .Where(m => m.SentDate > lastSyncDate && m.Chat.Bots.Count > 0 && !m.FromBot);
                     foreach (var message in newMessages)
                     {
-                        var isCommand = message.MessageText?.StartsWith('\\') ?? false;
-                        var isUrl = (message.MessageText?.StartsWith("http") ?? false)
-                                        || (message.MessageText?.StartsWith("file:/") ?? false);
-                        var isTxt = !isUrl && !isCommand;
-                        foreach (var bot in message.Chat.Bots)
-                        {
-                            switch (bot.Name)
-                            {
-                                case BotsConstants.Bots.AngryBot:
-                                    if (isTxt)
-                                    {
-                                        AngryBotTasksSet(message.Chat.ChatID, message.MessageText);
-                                    }
-                                    break;
-                                case BotsConstants.Bots.CommandBot:
-                                    if (isCommand)
-                                    {
-                                        CommandBotTasksSet(message.Chat.ChatID, message.MessageText);
-                                    }
-                                    break;
-                                case BotsConstants.Bots.UrlBot:
-                                    if (isUrl)
-                                    {
-                                        UrlBotTasksSet(message.Chat.ChatID, message.MessageText.Split(" ").First());
-                                    }
-                                    break;
-                            }
-                        }
+                        BotTasksSet(message);
                     }
                     if (lastSync != null)
                     {
@@ -111,33 +85,13 @@ namespace WebChatBotsWorkerService.Services
             }
         }
 
-        private void AngryBotTasksSet(int chatId, string message)
+        private void BotTasksSet(Message message)
         {
-            var queue = services.GetRequiredService<AngryBotTasksQueue>();
-            var worker = services.GetRequiredService<AngryBotWorker>();
+            var queue = services.GetRequiredService<IBotsTasksQueue>();
+            var worker = services.GetRequiredService<IMessageBot>();
             queue.QueueBackgroundWorkItem(token =>
             {
-                return worker.RunAsync(chatId, message, token);
-            });
-        }
-
-        private void CommandBotTasksSet(int chatId, string command)
-        {
-            var queue = services.GetRequiredService<CommandBotTasksQueue>();
-            var worker = services.GetRequiredService<CommandBotWorker>();
-            queue.QueueBackgroundWorkItem(token =>
-            {
-                return worker.RunAsync(chatId, command, token);
-            });
-        }
-
-        private void UrlBotTasksSet(int chatId, string url)
-        {
-            var queue = services.GetRequiredService<UrlBotTasksQueue>();
-            var worker = services.GetRequiredService<UrlBotWorker>();
-            queue.QueueBackgroundWorkItem(token =>
-            {
-                return worker.RunAsync(chatId, url, token);
+                return worker.RunAsync(message, token);
             });
         }
     }

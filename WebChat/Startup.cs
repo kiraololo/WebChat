@@ -20,6 +20,8 @@ using WebChatBotsWorkerService.Services;
 using WebChatBotsWorkerService.Workers;
 using WebChatBotsWorkerService.BotsQueue.Implementation;
 using Microsoft.Extensions.Logging;
+using WebChatBotsWorkerService.Helpers;
+using WebChatBotsWorkerService.BotsQueue.Contract;
 
 namespace WebChat
 {
@@ -55,11 +57,13 @@ namespace WebChat
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<IChatService, ChatService>();
-                        
+
             // configure strongly typed settings objects
-            var secretSettingsSection = Configuration.GetSection(
-                Constants.Settings.ConfigSections.SecretSettingsSection);
+            var secretSettingsSection = Configuration.GetSection(SecretSettings.SecretSettingsSection);
             services.Configure<SecretSettings>(secretSettingsSection);
+
+            var botsSettingsSection = Configuration.GetSection(BotsSettings.BotsSettingsSection);
+            services.Configure<BotsSettings>(botsSettingsSection);
 
             // configure jwt authentication
             var secretSettings = secretSettingsSection.Get<SecretSettings>();
@@ -102,12 +106,8 @@ namespace WebChat
             
             services.AddHostedService<BotsTasksSchedulerService>();
             services.AddHostedService<BotsWorkerService>();            
-            services.AddSingleton<AngryBotWorker>();
-            services.AddSingleton<CommandBotWorker>();
-            services.AddSingleton<UrlBotWorker>();
-            services.AddSingleton<AngryBotTasksQueue>();
-            services.AddSingleton<CommandBotTasksQueue>();
-            services.AddSingleton<UrlBotTasksQueue>();
+            services.AddSingleton<IMessageBot, MessageBot>();
+            services.AddSingleton<IBotsTasksQueue, BotTasksQueue>();
 
         }
 
