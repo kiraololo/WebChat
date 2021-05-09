@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WebChatBotsWorkerService.BotsQueue.Contract;
@@ -30,6 +31,14 @@ namespace WebChatBotsWorkerService.BotsQueue.Implementation
 
             workItems.Enqueue(workItem);
             signal.Release();
+        }
+
+        public void QueueBackgroundWorkItems(IEnumerable<Func<CancellationToken, Task>> workItems)
+        {
+            foreach(var workItem in workItems)
+            {
+                QueueBackgroundWorkItem(workItem);
+            }
         }
     }
 }

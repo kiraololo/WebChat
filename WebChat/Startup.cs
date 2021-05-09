@@ -5,23 +5,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
 using System.Threading.Tasks;
 using WebChat.Inftastructure;
+using WebChat.Inftastructure.Data;
 using WebChat.Inftastructure.Helpers;
 using WebChat.Services.Contract;
 using WebChat.Services.Implementation;
 using WebChatBotsWorkerService;
-using WebChatDataData.Models.Context;
-using WebChat.Inftastructure.Data;
+using WebChatBotsWorkerService.BotsQueue.Contract;
+using WebChatBotsWorkerService.BotsQueue.Implementation;
+using WebChatBotsWorkerService.Helpers;
 using WebChatBotsWorkerService.Services;
 using WebChatBotsWorkerService.Workers;
-using WebChatBotsWorkerService.BotsQueue.Implementation;
-using Microsoft.Extensions.Logging;
-using WebChatBotsWorkerService.Helpers;
-using WebChatBotsWorkerService.BotsQueue.Contract;
+using WebChatDataData.Models.Context;
 
 namespace WebChat
 {
@@ -103,12 +103,11 @@ namespace WebChat
 
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
-            
-            services.AddHostedService<BotsTasksSchedulerService>();
-            services.AddHostedService<BotsWorkerService>();            
-            services.AddSingleton<IMessageBot, MessageBot>();
+            services.AddHostedService<BotsWorkerService>();
+            services.AddHostedService<BotsTasksSchedulerService>();            
             services.AddSingleton<IBotsTasksQueue, BotTasksQueue>();
-
+            services.AddSingleton<IBot, MessageBot>();
+            services.AddSingleton<IBot, DelayBot>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
